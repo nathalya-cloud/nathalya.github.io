@@ -1,0 +1,50 @@
+<script>
+  const eventList = document.getElementById("eventList");
+  const token = "7J2DLTZXQAJLB2PIGBBG"; // 🔁 Replace with your token
+
+  // Fetch events near a location
+  async function loadEvents() {
+    const response = await fetch(
+      `https://www.eventbriteapi.com/v3/events/search/?location.address=Boston&expand=venue&token=${token}`
+    );
+    const data = await response.json();
+    showEvents(data.events);
+  }
+
+  // Display events
+  function showEvents(events) {
+    eventList.innerHTML = "";
+    events.forEach(event => {
+      const date = new Date(event.start.utc).toLocaleString();
+      const registerUrl = event.url;
+      const calendarLink = generateGoogleCalendarLink(event.name.text, event.start.utc, event.end.utc, event.venue?.address?.localized_address_display || "Online");
+
+      eventList.innerHTML += `
+        <div class="col-md-6 event-card">
+          <div class="card">
+            <div class="card-body">
+              <h5 class="card-title">${event.name.text}</h5>
+              <p class="card-text">🗓️ ${date}<br>📍 ${event.venue?.address?.localized_address_display || 'Online'}</p>
+              <a href="${registerUrl}" class="btn btn-success" target="_blank">Register</a>
+              <a href="${calendarLink}" target="_blank" class="btn btn-outline-primary">Add to Calendar</a>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+  }
+
+  // Google Calendar URL generator
+  function generateGoogleCalendarLink(title, startTime, endTime, location) {
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&dates=${formatDate(startTime)}/${formatDate(endTime)}&details=${encodeURIComponent(title)}&location=${encodeURIComponent(location)}`;
+  }
+
+  // Format date for Google Calendar (YYYYMMDDTHHMMSSZ)
+  function formatDate(dateStr) {
+    const d = new Date(dateStr);
+    return d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+  }
+
+  // Load events when page loads
+  window.onload = loadEvents;
+</script>
